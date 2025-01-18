@@ -1,19 +1,19 @@
 'use client'
 
 import { useState } from 'react'
-import { Transaction, CategoryLimit } from './types/transaction'
-import { UserProfile } from './types/user'
-import { TransactionCard } from './components/transaction-card'
-import { SpendingChart } from './components/spending-chart'
-import { SpendingPieChart } from './components/spending-pie-chart'
-import { AddTransactionForm } from './components/add-transaction-form'
-import { ThemeToggle } from './components/theme-toggle'
+import { Transaction, CategoryLimit } from '@/types/transaction'
+import { UserProfile } from '@/types/user'
+import { TransactionCard } from './transaction-card'
+import { SpendingChart } from './spending-chart'
+import { SpendingPieChart } from './spending-pie-chart'
+import { AddTransactionForm } from './add-transaction-form'
+import { ThemeToggle } from './theme-toggle'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Bell, Wallet } from 'lucide-react'
-import { formatCurrency } from './utils/formatters'
+import { formatCurrency } from '@/utils/formatters'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { NotificationDropdown } from './components/notification-dropdown'
+import { NotificationDropdown } from './notification-dropdown'
 import { Calendar } from '@/components/ui/calendar'
 import { format } from 'date-fns'
 import { Button } from '@/components/ui/button'
@@ -24,7 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { DateRangePicker } from './components/date-range-picker'
+import { DateRangePicker } from './date-range-picker'
 import { startOfDay, endOfDay, isWithinInterval } from 'date-fns'
 
 // Sample data
@@ -48,7 +48,6 @@ const sampleTransactions: Transaction[] = [
     paymentMethod: 'mobile',
     location: 'Whole Foods Market',
   },
-  // Add more sample transactions...
 ]
 
 const sampleCategoryLimits: CategoryLimit[] = [
@@ -76,10 +75,10 @@ const expenseData = [100, 150, 200, 180, 120, 250, 45.99]
 const sampleUserProfile: UserProfile = {
   name: 'John Doe',
   email: 'john.doe@example.com',
-  photoUrl: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Screenshot%202025-01-16%20165538-xYGlimd8qxmyEoS5QhuqaaeMtS1a1D.png', // Using the provided image URL
+  photoUrl: '/avatar.png', // Move this to public folder
 }
 
-export default function WalletDashboard() {
+const WalletDashboard = () => {
   const [transactions, setTransactions] = useState<Transaction[]>(sampleTransactions)
   const [categoryLimits] = useState<CategoryLimit[]>(sampleCategoryLimits)
   const [userProfile] = useState<UserProfile>(sampleUserProfile)
@@ -105,7 +104,6 @@ export default function WalletDashboard() {
       id: (transactions.length + 1).toString(),
     }
     
-    // Sort transactions by date in descending order (newest first)
     const updatedTransactions = [...transactions, transaction].sort((a, b) => 
       new Date(b.date).getTime() - new Date(a.date).getTime()
     )
@@ -343,3 +341,4 @@ export default function WalletDashboard() {
   )
 }
 
+export default WalletDashboard 
