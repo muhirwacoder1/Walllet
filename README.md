@@ -70,9 +70,9 @@ This application provides a solution for managing financial transactions across 
 
 ## Deployment
 
-The application is hosted on vercel, walllet-2138.vercel.app and can be accessed via the following link:
+The application is hosted on vercel, and can be accessed via the following link:
 
-**[Live Application](Insert_Live_Link)**
+**[Live Application](walllet-2138.vercel.app)**
 
 ---
 
