@@ -1,8 +1,25 @@
 'use client'
 
 import { Transaction } from '../types/transaction'
-import { Card } from '@/components/ui/card'
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts'
+import { Bar } from 'react-chartjs-2'
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js'
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+)
 
 interface SpendingPieChartProps {
   transactions: Transaction[]
@@ -17,36 +34,80 @@ export function SpendingPieChart({ transactions }: SpendingPieChartProps) {
       return acc
     }, {} as Record<string, number>)
 
-  const data = Object.entries(spendingByCategory).map(([name, value]) => ({
-    name,
-    value,
-  }))
+  const data = {
+    labels: Object.keys(spendingByCategory),
+    datasets: [
+      {
+        data: Object.values(spendingByCategory),
+        backgroundColor: [
+          'rgba(59, 130, 246, 0.8)', // blue
+          'rgba(16, 185, 129, 0.8)', // green
+          'rgba(249, 115, 22, 0.8)', // orange
+          'rgba(139, 92, 246, 0.8)', // purple
+          'rgba(236, 72, 153, 0.8)', // pink
+          'rgba(245, 158, 11, 0.8)', // yellow
+        ],
+        borderRadius: 4,
+      },
+    ],
+  }
 
-  // Custom colors for different categories
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D']
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false,
+      },
+      tooltip: {
+        backgroundColor: 'rgb(24, 24, 27)',
+        padding: 8,
+        bodySpacing: 4,
+        bodyFont: {
+          size: 13,
+        },
+        titleFont: {
+          size: 13,
+          weight: 'normal' as const,
+        },
+        callbacks: {
+          label: function(context: any) {
+            return new Intl.NumberFormat('en-US', { 
+              style: 'currency', 
+              currency: 'USD' 
+            }).format(context.raw);
+          }
+        }
+      },
+    },
+    scales: {
+      x: {
+        grid: {
+          display: false,
+        },
+      },
+      y: {
+        beginAtZero: true,
+        grid: {
+          color: 'rgba(0, 0, 0, 0.1)',
+        },
+        ticks: {
+          callback: function(value: any) {
+            return new Intl.NumberFormat('en-US', {
+              style: 'currency',
+              currency: 'USD',
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0,
+            }).format(value);
+          },
+        },
+      },
+    },
+  }
 
   return (
-    <ResponsiveContainer width="100%" height={400}>
-      <PieChart>
-        <Pie
-          data={data}
-          cx="50%"
-          cy="50%"
-          labelLine={false}
-          label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-          outerRadius={150}
-          fill="#8884d8"
-          dataKey="value"
-        >
-          {data.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-          ))}
-        </Pie>
-        <Tooltip 
-          formatter={(value: number) => `$${value.toFixed(2)}`}
-        />
-        <Legend />
-      </PieChart>
-    </ResponsiveContainer>
+    <div className="w-full h-[300px]">
+      <Bar data={data} options={options} />
+    </div>
   )
 } 

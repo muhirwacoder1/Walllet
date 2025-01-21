@@ -287,21 +287,77 @@ const WalletDashboard = () => {
     })
   }
 
+  const calculateTimeframeData = (
+    transactions: Transaction[], 
+    type: 'income' | 'expense',
+    timeframe: 'week' | 'month' | 'year'
+  ) => {
+    const now = new Date()
+    const periods = timeframe === 'week' ? 7 : timeframe === 'month' ? 30 : 12
+    const data = new Array(periods).fill(0)
+    
+    transactions
+      .filter(t => t.type === type)
+      .forEach(transaction => {
+        const date = new Date(transaction.date)
+        let index
+        
+        if (timeframe === 'week') {
+          index = periods - 1 - Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24))
+        } else if (timeframe === 'month') {
+          index = periods - 1 - Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24))
+        } else {
+          index = date.getMonth()
+        }
+        
+        if (index >= 0 && index < periods) {
+          data[index] += transaction.amount
+        }
+      })
+      
+    return data
+  }
+
+  const generateTimeframeLabels = (timeframe: 'week' | 'month' | 'year') => {
+    const now = new Date()
+    const periods = timeframe === 'week' ? 7 : timeframe === 'month' ? 30 : 12
+    const labels = []
+    
+    if (timeframe === 'year') {
+      return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    }
+    
+    for (let i = periods - 1; i >= 0; i--) {
+      const date = new Date(now)
+      date.setDate(date.getDate() - i)
+      labels.push(format(date, timeframe === 'week' ? 'MMM d' : 'MMM d'))
+    }
+    
+    return labels
+  }
+
   return (
     <div className="container mx-auto p-4 space-y-6 max-w-7xl">
       {/* Header section */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <div className="flex items-center gap-4">
-          <Avatar className="h-12 w-12">
-            <AvatarImage src={userProfile.photoUrl} alt={userProfile.name} />
-            <AvatarFallback>{userProfile.name[0]}</AvatarFallback>
-          </Avatar>
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-primary/10 rounded-xl">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              className="w-6 h-6 text-primary"
+            >
+              <path d="M2.273 5.625A4.483 4.483 0 015.25 4.5h13.5c1.141 0 2.183.425 2.977 1.125A3 3 0 0018.75 3H5.25a3 3 0 00-2.977 2.625zM2.273 8.625A4.483 4.483 0 015.25 7.5h13.5c1.141 0 2.183.425 2.977 1.125A3 3 0 0018.75 6H5.25a3 3 0 00-2.977 2.625zM5.25 9a3 3 0 00-3 3v6a3 3 0 003 3h13.5a3 3 0 003-3v-6a3 3 0 00-3-3H15a.75.75 0 00-.75.75 2.25 2.25 0 01-4.5 0A.75.75 0 009 9H5.25z" />
+            </svg>
+          </div>
           <div>
-            <h1 className="text-2xl font-bold">Welcome back, {userProfile.name}!</h1>
+            <h1 className="text-2xl font-bold">Welcome!</h1>
             <p className="text-muted-foreground">Track your finances</p>
           </div>
         </div>
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex-1" />
+        <div className="flex items-center gap-2">
           <NotificationDropdown />
           <ThemeToggle />
         </div>
@@ -342,13 +398,109 @@ const WalletDashboard = () => {
       {/* Tabs Section */}
       <div className="mt-6">
         <Tabs defaultValue="income" className="w-full">
-          <TabsList className="w-full flex flex-wrap justify-start gap-2 bg-transparent">
-            <TabsTrigger value="income" className="flex-1 sm:flex-none">💸 Income</TabsTrigger>
-            <TabsTrigger value="expenses" className="flex-1 sm:flex-none">💳 Expenses</TabsTrigger>
-            <TabsTrigger value="budget" className="flex-1 sm:flex-none">💰 Budget</TabsTrigger>
-            <TabsTrigger value="analysis" className="flex-1 sm:flex-none">📊 Analysis</TabsTrigger>
-            <TabsTrigger value="reports" className="flex-1 sm:flex-none">📋 Reports</TabsTrigger>
-          </TabsList>
+          <div className="mb-4 overflow-x-auto">
+            <TabsList className="inline-flex h-auto w-auto min-w-full p-1 bg-muted/50 rounded-lg">
+              <div className="flex gap-1">
+                <TabsTrigger 
+                  value="income" 
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    className="w-4 h-4"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M1 4a1 1 0 011-1h16a1 1 0 011 1v8a1 1 0 01-1 1H2a1 1 0 01-1-1V4zm12 4a3 3 0 11-6 0 3 3 0 016 0zM4 9a1 1 0 100-2 1 1 0 000 2zm13-1a1 1 0 11-2 0 1 1 0 012 0zM1.75 14.5a.75.75 0 000 1.5c4.417 0 8.693.603 12.749 1.73 1.111.309 2.251-.512 2.251-1.696v-.784a.75.75 0 00-1.5 0v.784a.272.272 0 01-.35.25A49.043 49.043 0 001.75 14.5z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <span className="hidden sm:inline">Income</span>
+                  <span className="inline sm:hidden">💸</span>
+                </TabsTrigger>
+
+                <TabsTrigger 
+                  value="expenses" 
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    className="w-4 h-4"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M2.5 4A1.5 1.5 0 001 5.5V6h18v-.5A1.5 1.5 0 0017.5 4h-15zM19 8.5H1v6A1.5 1.5 0 002.5 16h15a1.5 1.5 0 001.5-1.5v-6zM3 13.25a.75.75 0 01.75-.75h1.5a.75.75 0 010 1.5h-1.5a.75.75 0 01-.75-.75zm4.75-.75a.75.75 0 000 1.5h3.5a.75.75 0 000-1.5h-3.5z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <span className="hidden sm:inline">Expenses</span>
+                  <span className="inline sm:hidden">💳</span>
+                </TabsTrigger>
+
+                <TabsTrigger 
+                  value="budget" 
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    className="w-4 h-4"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.798 7.45c.512-.67 1.135-.95 1.702-.95s1.19.28 1.702.95a.75.75 0 001.192-.91C12.637 5.55 11.596 5 10.5 5s-2.137.55-2.894 1.54A5.205 5.205 0 006.83 8H5.75a.75.75 0 000 1.5h.77a6.333 6.333 0 000 1h-.77a.75.75 0 000 1.5h1.08c.183.528.442 1.023.776 1.46.757.99 1.798 1.54 2.894 1.54s2.137-.55 2.894-1.54a.75.75 0 00-1.192-.91c-.512.67-1.135.95-1.702.95s-1.19-.28-1.702-.95a3.505 3.505 0 01-.343-.55h1.795a.75.75 0 000-1.5H8.026a4.835 4.835 0 010-1h2.224a.75.75 0 000-1.5H8.455c.098-.195.212-.38.343-.55z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <span className="hidden sm:inline">Budget</span>
+                  <span className="inline sm:hidden">💰</span>
+                </TabsTrigger>
+
+                <TabsTrigger 
+                  value="analysis" 
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    className="w-4 h-4"
+                  >
+                    <path
+                      d="M15.5 2A1.5 1.5 0 0014 3.5v13a1.5 1.5 0 001.5 1.5h1a1.5 1.5 0 001.5-1.5v-13A1.5 1.5 0 0016.5 2h-1zM9.5 6A1.5 1.5 0 008 7.5v9A1.5 1.5 0 009.5 18h1a1.5 1.5 0 001.5-1.5v-9A1.5 1.5 0 0010.5 6h-1zM3.5 10A1.5 1.5 0 002 11.5v5A1.5 1.5 0 003.5 18h1A1.5 1.5 0 006 16.5v-5A1.5 1.5 0 004.5 10h-1z"
+                    />
+                  </svg>
+                  <span className="hidden sm:inline">Analysis</span>
+                  <span className="inline sm:hidden">📊</span>
+                </TabsTrigger>
+
+                <TabsTrigger 
+                  value="reports" 
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    className="w-4 h-4"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M2 3.5A1.5 1.5 0 013.5 2h9A1.5 1.5 0 0114 3.5v11.75A2.75 2.75 0 0016.75 18h-12A2.75 2.75 0 012 15.25V3.5zm3.75 7a.75.75 0 000 1.5h4.5a.75.75 0 000-1.5h-4.5zm0 3a.75.75 0 000 1.5h4.5a.75.75 0 000-1.5h-4.5zM5 5.75A.75.75 0 015.75 5h4.5a.75.75 0 01.75.75v2.5a.75.75 0 01-.75.75h-4.5A.75.75 0 015 8.25v-2.5z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <span className="hidden sm:inline">Reports</span>
+                  <span className="inline sm:hidden">📋</span>
+                </TabsTrigger>
+              </div>
+            </TabsList>
+          </div>
 
           <TabsContent value="income">
             <div className="grid gap-6">
@@ -465,9 +617,9 @@ const WalletDashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <SpendingChart 
-                    incomeData={incomeData}
-                    expenseData={expenseData}
-                    labels={chartLabels}
+                    incomeData={calculateTimeframeData(transactions, 'income', timeframe)}
+                    expenseData={calculateTimeframeData(transactions, 'expense', timeframe)}
+                    labels={generateTimeframeLabels(timeframe)}
                   />
                 </CardContent>
               </Card>
