@@ -287,17 +287,66 @@ const WalletDashboard = () => {
     })
   }
 
+  const calculateTimeframeData = (
+    transactions: Transaction[], 
+    type: 'income' | 'expense',
+    timeframe: 'week' | 'month' | 'year'
+  ) => {
+    const now = new Date()
+    const periods = timeframe === 'week' ? 7 : timeframe === 'month' ? 30 : 12
+    const data = new Array(periods).fill(0)
+    
+    transactions
+      .filter(t => t.type === type)
+      .forEach(transaction => {
+        const date = new Date(transaction.date)
+        let index
+        
+        if (timeframe === 'week') {
+          index = periods - 1 - Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24))
+        } else if (timeframe === 'month') {
+          index = periods - 1 - Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24))
+        } else {
+          index = date.getMonth()
+        }
+        
+        if (index >= 0 && index < periods) {
+          data[index] += transaction.amount
+        }
+      })
+      
+    return data
+  }
+
+  const generateTimeframeLabels = (timeframe: 'week' | 'month' | 'year') => {
+    const now = new Date()
+    const periods = timeframe === 'week' ? 7 : timeframe === 'month' ? 30 : 12
+    const labels = []
+    
+    if (timeframe === 'year') {
+      return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    }
+    
+    for (let i = periods - 1; i >= 0; i--) {
+      const date = new Date(now)
+      date.setDate(date.getDate() - i)
+      labels.push(format(date, timeframe === 'week' ? 'MMM d' : 'MMM d'))
+    }
+    
+    return labels
+  }
+
   return (
     <div className="container mx-auto p-4 space-y-6 max-w-7xl">
       {/* Header section */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div className="flex items-center gap-4">
           <Avatar className="h-12 w-12">
-            <AvatarImage src={userProfile.photoUrl} alt={userProfile.name} />
-            <AvatarFallback>{userProfile.name[0]}</AvatarFallback>
+            <AvatarImage src="/avatar.png" alt="Profile" />
+            <AvatarFallback>U</AvatarFallback>
           </Avatar>
           <div>
-            <h1 className="text-2xl font-bold">Welcome back, {userProfile.name}!</h1>
+            <h1 className="text-2xl font-bold">Welcome!</h1>
             <p className="text-muted-foreground">Track your finances</p>
           </div>
         </div>
@@ -465,9 +514,9 @@ const WalletDashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <SpendingChart 
-                    incomeData={incomeData}
-                    expenseData={expenseData}
-                    labels={chartLabels}
+                    incomeData={calculateTimeframeData(transactions, 'income', timeframe)}
+                    expenseData={calculateTimeframeData(transactions, 'expense', timeframe)}
+                    labels={generateTimeframeLabels(timeframe)}
                   />
                 </CardContent>
               </Card>
